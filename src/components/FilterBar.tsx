@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Slider } from "./ui/slider";
 import {
   Select,
@@ -8,12 +8,32 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Button } from "./ui/button";
-import { Filter, X, ChevronDown } from "lucide-react";
+import {
+  Filter,
+  X,
+  ChevronDown,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Checkbox } from "./ui/checkbox";
 import { Input } from "./ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
 
 interface FilterBarProps {
   onFilterChange?: (filters: FilterValues) => void;
+  onSearch?: (query: string) => void;
+  initialFilters?: {
+    priceRange?: [number, number];
+    bedrooms?: string;
+    location?: string;
+  };
 }
 
 interface FilterValues {
@@ -22,43 +42,70 @@ interface FilterValues {
   location: string;
 }
 
-const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
+const FilterBar: React.FC<FilterBarProps> = ({
+  onFilterChange = () => {},
+  onSearch = () => {},
+  initialFilters = {},
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [filters, setFilters] = useState<FilterValues>({
-    priceRange: [500, 3000],
-    bedrooms: "any",
-    location: "any",
-  });
+  const [priceRange, setPriceRange] = useState<[number, number]>(
+    initialFilters.priceRange || [500, 3000],
+  );
+  const [bedrooms, setBedrooms] = useState(initialFilters.bedrooms || "any");
+  const [location, setLocation] = useState(initialFilters.location || "any");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  // Apply initial filters if provided
+  useEffect(() => {
+    if (Object.keys(initialFilters).length > 0) {
+      applyFilters();
+    }
+  }, []);
 
   const handlePriceChange = (value: number[]) => {
-    const newFilters = {
-      ...filters,
-      priceRange: [value[0], value[1]] as [number, number],
-    };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    setPriceRange([value[0], value[1]] as [number, number]);
   };
 
   const handleBedroomsChange = (value: string) => {
-    const newFilters = { ...filters, bedrooms: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    setBedrooms(value);
   };
 
   const handleLocationChange = (value: string) => {
-    const newFilters = { ...filters, location: value };
-    setFilters(newFilters);
+    setLocation(value);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(searchQuery);
+  };
+
+  const applyFilters = () => {
+    const newFilters = {
+      priceRange,
+      bedrooms,
+      location,
+    };
     onFilterChange(newFilters);
+    setIsFilterSheetOpen(false);
+    setIsExpanded(false);
   };
 
   const resetFilters = () => {
-    const defaultFilters = {
+    setPriceRange([500, 3000]);
+    setBedrooms("any");
+    setLocation("any");
+    setSearchQuery("");
+    onFilterChange({
       priceRange: [500, 3000],
       bedrooms: "any",
       location: "any",
-    };
-    setFilters(defaultFilters);
-    onFilterChange(defaultFilters);
+    });
+    onSearch("");
   };
 
   const toggleExpand = () => {
@@ -83,24 +130,44 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
           </Button>
 
           <div className="hidden md:flex items-center gap-4">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative flex-1 max-w-md"
+            >
+              <Input
+                type="text"
+                placeholder="Поиск по адресу или названию..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <Button type="submit" className="sr-only">
+                Поиск
+              </Button>
+            </form>
+
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Цена:</span>
               <span className="text-sm text-gray-500">
-                ${filters.priceRange[0]} - ${filters.priceRange[1]}
+                ${priceRange[0]} - ${priceRange[1]}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Спальни:</span>
               <span className="text-sm text-gray-500">
-                {filters.bedrooms === "any" ? "Любое" : filters.bedrooms}
+                {bedrooms === "any" ? "Любое" : bedrooms}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Район:</span>
               <span className="text-sm text-gray-500">
-                {filters.location === "any" ? "Любой" : filters.location}
+                {location === "any" ? "Любой" : location}
               </span>
             </div>
           </div>
@@ -113,6 +180,26 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
           >
             Сбросить
           </Button>
+        </div>
+
+        {/* Mobile search */}
+        <div className="md:hidden mt-3">
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Input
+              type="text"
+              placeholder="Поиск по адресу или названию..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+            <Button type="submit" className="sr-only">
+              Поиск
+            </Button>
+          </form>
         </div>
 
         {isExpanded && (
@@ -137,10 +224,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
                 <label className="text-sm font-medium">Диапазон цен</label>
                 <div className="px-2">
                   <Slider
-                    defaultValue={[
-                      filters.priceRange[0],
-                      filters.priceRange[1],
-                    ]}
+                    value={[priceRange[0], priceRange[1]]}
                     min={0}
                     max={10000}
                     step={100}
@@ -149,17 +233,14 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
                   />
                 </div>
                 <div className="flex justify-between text-sm text-gray-500">
-                  <span>${filters.priceRange[0]}</span>
-                  <span>${filters.priceRange[1]}</span>
+                  <span>${priceRange[0]}</span>
+                  <span>${priceRange[1]}</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Спальни</label>
-                <Select
-                  value={filters.bedrooms}
-                  onValueChange={handleBedroomsChange}
-                >
+                <Select value={bedrooms} onValueChange={handleBedroomsChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Выберите количество" />
                   </SelectTrigger>
@@ -176,22 +257,17 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Район</label>
-                <Select
-                  value={filters.location}
-                  onValueChange={handleLocationChange}
-                >
+                <Select value={location} onValueChange={handleLocationChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Выберите район" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Любой</SelectItem>
-                    <SelectItem value="downtown">Центр</SelectItem>
-                    <SelectItem value="uptown">Верхний город</SelectItem>
-                    <SelectItem value="midtown">Средний город</SelectItem>
-                    <SelectItem value="west">Западный район</SelectItem>
-                    <SelectItem value="east">Восточный район</SelectItem>
+                    <SelectItem value="center">Центр</SelectItem>
                     <SelectItem value="north">Северный район</SelectItem>
                     <SelectItem value="south">Южный район</SelectItem>
+                    <SelectItem value="west">Западный район</SelectItem>
+                    <SelectItem value="east">Восточный район</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -298,7 +374,10 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange = () => {} }) => {
             </div>
 
             <div className="flex justify-end mt-6">
-              <Button className="bg-primary text-white hover:bg-primary/90">
+              <Button
+                className="bg-primary text-white hover:bg-primary/90"
+                onClick={applyFilters}
+              >
                 Применить фильтры
               </Button>
             </div>

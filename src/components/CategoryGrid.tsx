@@ -1,7 +1,7 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import CategoryCard from "./CategoryCard";
 import { Button } from "./ui/button";
-import { useNavigate } from "react-router-dom";
 
 interface Category {
   id: string;
@@ -11,42 +11,13 @@ interface Category {
 }
 
 interface CategoryGridProps {
-  categories?: Category[];
+  categories: Category[];
   title?: string;
   showViewAll?: boolean;
 }
 
 const CategoryGrid: React.FC<CategoryGridProps> = ({
-  categories = [
-    {
-      id: "studio",
-      title: "Студии",
-      imageUrl:
-        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
-      count: 12,
-    },
-    {
-      id: "one-bedroom",
-      title: "Однокомнатные",
-      imageUrl:
-        "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=800&q=80",
-      count: 24,
-    },
-    {
-      id: "two-bedroom",
-      title: "Двухкомнатные",
-      imageUrl:
-        "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80",
-      count: 18,
-    },
-    {
-      id: "three-bedroom",
-      title: "Трехкомнатные",
-      imageUrl:
-        "https://images.unsplash.com/photo-1560185008-b033106af5c3?w=800&q=80",
-      count: 9,
-    },
-  ],
+  categories,
   title = "Популярные категории",
   showViewAll = true,
 }) => {

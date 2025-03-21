@@ -13,20 +13,18 @@ import FavoritesPage from "./components/FavoritesPage";
 function App() {
   return (
     <Suspense fallback={<p>Loading...</p>}>
-      <>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/floor-plans" element={<FloorPlansPage />} />
-          <Route path="/apartments/:id" element={<ApartmentDetailPage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-          {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
-        </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-      </>
+      {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/floor-plans" element={<FloorPlansPage />} />
+        <Route path="/apartments/:id" element={<ApartmentDetailPage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
+        {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
+      </Routes>
     </Suspense>
   );
 }

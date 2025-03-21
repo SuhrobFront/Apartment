@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   User,
@@ -8,6 +8,7 @@ import {
   Heart,
   MapPin,
   Home as HomeIcon,
+  LogOut,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
@@ -32,8 +33,22 @@ const Navbar = ({
   isLoggedIn = false,
   userName = "Гость",
 }: NavbarProps) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [localUserName, setLocalUserName] = useState(userName);
+  const [localIsLoggedIn, setLocalIsLoggedIn] = useState(isLoggedIn);
+
+  // Check login status from localStorage
+  useEffect(() => {
+    const userToken = localStorage.getItem("userToken");
+    const storedUserName = localStorage.getItem("userName");
+
+    setLocalIsLoggedIn(!!userToken);
+    if (storedUserName) {
+      setLocalUserName(storedUserName);
+    }
+  }, [isLoggedIn]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,49 +59,57 @@ const Navbar = ({
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("userName");
+    setLocalIsLoggedIn(false);
+    navigate("/");
+  };
+
   return (
-    <nav className="w-full h-20 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="container h-full mx-auto px-4 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center">
-          <Link to="/">
-            <h1 className="text-2xl font-bold text-gray-900">{logo}</h1>
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <span className="text-xl font-bold text-primary">{logo}</span>
           </Link>
-        </div>
 
-        {/* Desktop Navigation Links */}
-        <div className="hidden lg:flex items-center space-x-6">
-          <Link to="/" className="text-gray-700 hover:text-primary font-medium">
-            Квартиры
-          </Link>
-          <Link
-            to="/floor-plans"
-            className="text-gray-700 hover:text-primary font-medium"
-          >
-            Планировки
-          </Link>
-          <Link
-            to="/about"
-            className="text-gray-700 hover:text-primary font-medium"
-          >
-            О нас
-          </Link>
-          <Link
-            to="/contact"
-            className="text-gray-700 hover:text-primary font-medium"
-          >
-            Контакты
-          </Link>
-        </div>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-4">
+            <Link
+              to="/"
+              className="text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+            >
+              Главная
+            </Link>
+            <Link
+              to="/floor-plans"
+              className="text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+            >
+              Квартиры
+            </Link>
+            <Link
+              to="/about"
+              className="text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+            >
+              О нас
+            </Link>
+            <Link
+              to="/contact"
+              className="text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+            >
+              Контакты
+            </Link>
+          </nav>
 
-        {/* Desktop Search */}
-        <div className="hidden md:flex items-center space-x-6 flex-1 justify-center max-w-md mx-4">
-          <form onSubmit={handleSearch} className="w-full">
-            <div className="relative">
+          {/* Desktop Search and User */}
+          <div className="hidden md:flex items-center space-x-4">
+            <form onSubmit={handleSearch} className="relative w-64">
               <Input
                 type="text"
-                placeholder="Поиск квартир..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg"
+                placeholder="Поиск..."
+                className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -94,87 +117,79 @@ const Navbar = ({
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={18}
               />
-            </div>
-          </form>
-        </div>
+            </form>
 
-        {/* User Menu (Desktop) */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link to="/favorites">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Heart className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <MapPin className="h-5 w-5" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {isLoggedIn ? (
-                <>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Link to="/profile" className="w-full">
-                      Профиль ({userName})
-                    </Link>
+            {localIsLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-2 text-gray-700 hover:text-primary"
+                  >
+                    <User size={20} />
+                    <span>{localUserName}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Профиль</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Link to="/favorites" className="w-full">
-                      Избранное
-                    </Link>
+                  <DropdownMenuItem onClick={() => navigate("/favorites")}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Избранное</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    Выйти
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Выйти</span>
                   </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Link to="/login" className="w-full">
-                      Войти
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Link to="/login?tab=register" className="w-full">
-                      Регистрация
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMobileMenu}
-            className="rounded-full"
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Menu className="h-6 w-6" />
+              <Button
+                variant="default"
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-2"
+              >
+                <User size={18} />
+                <span>Войти</span>
+              </Button>
             )}
-          </Button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="flex md:hidden items-center space-x-2">
+            {localIsLoggedIn && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/favorites")}
+                className="text-gray-700"
+              >
+                <Heart size={20} />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileMenu}
+              className="text-gray-700"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white p-4 border-b border-gray-200">
-          <form onSubmit={handleSearch} className="mb-4">
-            <div className="relative">
+        <div className="md:hidden bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-3 space-y-4">
+            <form onSubmit={handleSearch} className="relative">
               <Input
                 type="text"
-                placeholder="Поиск квартир..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg"
+                placeholder="Поиск..."
+                className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -182,65 +197,84 @@ const Navbar = ({
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={18}
               />
-            </div>
-          </form>
-          <div className="space-y-2">
-            <Link to="/">
-              <Button variant="ghost" className="w-full justify-start">
-                <HomeIcon className="mr-2 h-4 w-4" /> Квартиры
-              </Button>
-            </Link>
-            <Link to="/floor-plans">
-              <Button variant="ghost" className="w-full justify-start">
-                <MapPin className="mr-2 h-4 w-4" /> Планировки
-              </Button>
-            </Link>
-            <Link to="/favorites">
-              <Button variant="ghost" className="w-full justify-start">
-                <Heart className="mr-2 h-4 w-4" /> Избранное
-              </Button>
-            </Link>
-            <Link to="/about">
-              <Button variant="ghost" className="w-full justify-start">
-                О нас
-              </Button>
-            </Link>
-            <Link to="/contact">
-              <Button variant="ghost" className="w-full justify-start">
-                Контакты
-              </Button>
-            </Link>
-            <div className="border-t border-gray-200 my-2 pt-2">
-              {isLoggedIn ? (
-                <>
-                  <Link to="/profile">
-                    <Button variant="ghost" className="w-full justify-start">
-                      <User className="mr-2 h-4 w-4" /> Профиль ({userName})
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" className="w-full justify-start">
+            </form>
+
+            <nav className="flex flex-col space-y-2">
+              <Link
+                to="/"
+                className="flex items-center gap-2 text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <HomeIcon size={18} />
+                <span>Главная</span>
+              </Link>
+              <Link
+                to="/floor-plans"
+                className="flex items-center gap-2 text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <MapPin size={18} />
+                <span>Квартиры</span>
+              </Link>
+              <Link
+                to="/about"
+                className="flex items-center gap-2 text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span>О нас</span>
+              </Link>
+              <Link
+                to="/contact"
+                className="flex items-center gap-2 text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span>Контакты</span>
+              </Link>
+            </nav>
+
+            {localIsLoggedIn ? (
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <User size={18} className="text-gray-500" />
+                  <span className="font-medium">{localUserName}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      navigate("/profile");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full"
+                  >
+                    Профиль
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="w-full"
+                  >
                     Выйти
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Войти
-                    </Button>
-                  </Link>
-                  <Link to="/login?tab=register">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Регистрация
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
+                </div>
+              </div>
+            ) : (
+              <div className="border-t border-gray-200 pt-4">
+                <Button
+                  onClick={() => {
+                    navigate("/login");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full"
+                >
+                  Войти / Зарегистрироваться
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 };
 
